@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createIssueSchema } from '@/app/validationSchemas';
 import { z } from 'zod'
 import ErrorMessage from '@/app/components/ErrorMessage';
+import Spinner from '@/app/components/Spinner';
 
 
 type IssueForm = z.infer<typeof createIssueSchema>;
@@ -19,10 +20,11 @@ const NewIssuePage = () => {
 
     const router = useRouter()
 
-    const { register, control, handleSubmit, formState : { errors} } = useForm<IssueForm>({
+    const { register, control, handleSubmit, formState: { errors } } = useForm<IssueForm>({
         resolver: zodResolver(createIssueSchema)
     });
     const [error, setError] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
 
     return (
@@ -32,18 +34,19 @@ const NewIssuePage = () => {
             </Callout.Root>
             }
             <form onSubmit={handleSubmit(async (data) => {
-
                 try {
+                    setIsSubmitting(true)
                     await axios.post('/api/issues', data)
                     router.push('/issues')
                 } catch (error) {
                     setError('An Unexpected Error Occurred')
+                    setIsSubmitting(false)
                 }
             })} className=' space-y-3'>
                 <TextField.Root>
                     <TextField.Input placeholder='title'  {...register('title')} />
                 </TextField.Root>
-               <ErrorMessage> {errors.title?.message}</ErrorMessage>
+                <ErrorMessage> {errors.title?.message}</ErrorMessage>
                 <Controller
                     name='description'
                     control={control}
@@ -51,8 +54,8 @@ const NewIssuePage = () => {
                         <SimpleMDE placeholder="Description" {...field} />
                     }
                 />
-              <ErrorMessage>{errors.description?.message}</ErrorMessage>
-                <Button>Submit New Issue</Button>
+                <ErrorMessage>{errors.description?.message}</ErrorMessage>
+                <Button disabled={isSubmitting}>Submit New Issue { isSubmitting && <Spinner />} </Button>
             </form>
 
         </div>
